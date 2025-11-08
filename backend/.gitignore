@@ -102,3 +102,4 @@ tests/test_data/TEST_REPORT.md
 # Documentation build
 docs/_build/
 site/
+*.db
