@@ -11,7 +11,7 @@ from typing import Optional, Dict, Any
 import logging
 
 from app.config import settings
-from app.routes import speech, translation, animation, health
+from app.routes import speech, translation, animation, health, pose, avatar
 from app.database import engine, Base
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.auth import AuthMiddleware
@@ -53,6 +53,8 @@ app.include_router(health.router, prefix="/api/v1", tags=["Health"])
 app.include_router(speech.router, prefix="/api/v1/speech", tags=["Speech Recognition"])
 app.include_router(translation.router, prefix="/api/v1/translation", tags=["Translation"])
 app.include_router(animation.router, prefix="/api/v1/animation", tags=["Animation"])
+app.include_router(pose.router, tags=["Pose Extraction"])
+app.include_router(avatar.router, tags=["Avatar Animation"])
 
 @app.on_event("startup")
 async def startup_event():

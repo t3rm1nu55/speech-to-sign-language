@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASL Avatar Visualization Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .input-section {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 15px 30px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5568d3;
+        }
+
+        .output-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .visualization-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .visualization-card h2 {
+            margin-bottom: 15px;
+            color: #667eea;
+            font-size: 1.5em;
+        }
+
+        .status {
+            background: #f0f0f0;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .status.ready {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        video {
+            width: 100%;
+            height: 300px;
+            background: #000;
+            border-radius: 5px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 300px;
+            background: #1a1a1a;
+            border-radius: 5px;
+        }
+
+        .gloss-output {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .info {
+            margin-top: 15px;
+            padding: 10px;
+            background: #e7f3ff;
+            border-left: 4px solid #667eea;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤟 ASL Avatar Visualization Demo</h1>
+
+        <div class="input-section">
+            <div class="input-group">
+                <input type="text" id="text-input" placeholder="Enter text to translate to ASL..." value="Hello how are you">
+                <button onclick="translateAndDisplay()">Translate & Display</button>
+            </div>
+        </div>
+
+        <div class="output-section">
+            <!-- Option 1: Video Playback -->
+            <div class="visualization-card">
+                <h2>Option 1: Video Playback</h2>
+                <div class="status ready">✅ Production Ready</div>
+                <video id="video-player" controls loop muted>
+                    <source src="" type="video/mp4">
+                    Your browser does not support video.
+                </video>
+                <div id="video-info" class="info">
+                    Click "Translate & Display" to see real ASL signers
+                </div>
+            </div>
+
+            <!-- Option 2: MediaPipe Skeleton -->
+            <div class="visualization-card">
+                <h2>Option 2: MediaPipe Skeleton</h2>
+                <div class="status ready">✅ Implemented</div>
+                <canvas id="skeleton-canvas"></canvas>
+                <div id="skeleton-info" class="info">
+                    Extracting pose from video... (requires backend)
+                </div>
+            </div>
+
+            <!-- Option 3: Ready Player Me Avatar -->
+            <div class="visualization-card">
+                <h2>Option 3: 3D Avatar</h2>
+                <div class="status ready">✅ Ready Player Me Integration</div>
+                <canvas id="avatar-canvas"></canvas>
+                <div id="avatar-info" class="info">
+                    Using Ready Player Me avatar with pose-driven animation.<br>
+                    <small>Avatar URL can be customized - create your own at readyplayer.me</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="visualization-card">
+            <h2>ASL Gloss Output</h2>
+            <div id="gloss-output" class="gloss-output">
+                Translation will appear here...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = 'http://localhost:8000';
+
+        async function translateAndDisplay() {
+            const text = document.getElementById('text-input').value;
+
+            if (!text) {
+                alert('Please enter some text');
+                return;
+            }
+
+            try {
+                // Step 1: Translate text to ASL gloss
+                const response = await fetch(`${API_BASE}/api/v1/translation/translate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        sign_language: 'ASL'
+                    })
+                });
+
+                const data = await response.json();
+
+                // Display gloss
+                document.getElementById('gloss-output').textContent =
+                    `Input: "${data.original_text}"\nGloss: ${data.gloss_sequence}`;
+
+                // Display using different visualization methods
+                await displayAsVideo(data);
+                await displayAsSkeleton(data);
+                displayAsAvatar(data); // Placeholder
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: Make sure the backend is running on http://localhost:8000');
+            }
+        }
+
+        // Option 1: Video Playback
+        async function displayAsVideo(data) {
+            const signs = data.sign_sequence;
+            const videoPlayer = document.getElementById('video-player');
+            const videoInfo = document.getElementById('video-info');
+
+            if (signs.length === 0) {
+                videoInfo.textContent = 'No signs to display';
+                return;
+            }
+
+            // Play first sign's video
+            const firstSignWithVideo = signs.find(s => s.video_url);
+
+            if (firstSignWithVideo) {
+                videoPlayer.src = firstSignWithVideo.video_url;
+                videoPlayer.load();
+                videoPlayer.play();
+
+                videoInfo.innerHTML = `
+                    <strong>Displaying: ${firstSignWithVideo.gloss}</strong><br>
+                    ${signs.filter(s => s.video_url).length} of ${signs.length} signs have videos<br>
+                    <small>Video Source: ${new URL(firstSignWithVideo.video_url).hostname}</small>
+                `;
+
+                // Play all signs in sequence
+                let currentIndex = 0;
+                const signsWithVideo = signs.filter(s => s.video_url);
+
+                videoPlayer.addEventListener('ended', function playNext() {
+                    currentIndex++;
+                    if (currentIndex < signsWithVideo.length) {
+                        videoPlayer.src = signsWithVideo[currentIndex].video_url;
+                        videoPlayer.load();
+                        videoPlayer.play();
+                        videoInfo.innerHTML = `
+                            <strong>Displaying: ${signsWithVideo[currentIndex].gloss}</strong><br>
+                            Sign ${currentIndex + 1} of ${signsWithVideo.length}
+                        `;
+                    }
+                });
+            } else {
+                videoInfo.textContent = 'No video URLs available for these signs';
+            }
+        }
+
+        // Option 2: MediaPipe Skeleton
+        async function displayAsSkeleton(data) {
+            const signs = data.sign_sequence;
+            const skeletonInfo = document.getElementById('skeleton-info');
+
+            // Get first sign with video URL
+            const firstSign = signs.find(s => s.video_url);
+
+            if (!firstSign) {
+                skeletonInfo.textContent = 'No video available to extract pose';
+                return;
+            }
+
+            skeletonInfo.textContent = `Extracting pose from "${firstSign.gloss}" video...`;
+
+            try {
+                // Extract pose from video
+                const poseResponse = await fetch(`${API_BASE}/api/pose/extract`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        video_url: firstSign.video_url,
+                        max_frames: 30
+                    })
+                });
+
+                const poseData = await poseResponse.json();
+
+                if (poseData.success) {
+                    drawSkeleton(poseData);
+                    skeletonInfo.innerHTML = `
+                        <strong>✅ Skeleton extracted!</strong><br>
+                        Frames: ${poseData.processed_frames}<br>
+                        FPS: ${poseData.fps?.toFixed(1)}
+                    `;
+                } else {
+                    skeletonInfo.textContent = `Error: ${poseData.error}`;
+                }
+
+            } catch (error) {
+                console.error('Skeleton extraction error:', error);
+                skeletonInfo.textContent = 'Error extracting skeleton. Make sure backend is running with MediaPipe installed.';
+            }
+        }
+
+        // Draw skeleton using Three.js
+        function drawSkeleton(poseData) {
+            const canvas = document.getElementById('skeleton-canvas');
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+            const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+
+            renderer.setSize(canvas.width, canvas.height);
+            camera.position.z = 2;
+
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            // Animate through frames
+            let frameIndex = 0;
+            const frames = poseData.frames;
+
+            function animateFrame() {
+                if (frameIndex >= frames.length) {
+                    frameIndex = 0; // Loop
+                }
+
+                // Clear previous frame
+                while(scene.children.length > 1) {
+                    scene.remove(scene.children[1]);
+                }
+
+                const frame = frames[frameIndex];
+
+                // Draw pose joints
+                if (frame.pose) {
+                    frame.pose.forEach((point, i) => {
+                        if (point.visibility > 0.5) {
+                            const geometry = new THREE.SphereGeometry(0.015, 16, 16);
+                            const material = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+                            const sphere = new THREE.Mesh(geometry, material);
+                            sphere.position.set(point.x - 0.5, 1 - point.y, -point.z);
+                            scene.add(sphere);
+                        }
+                    });
+
+                    // Draw bones
+                    if (poseData.skeleton_connections) {
+                        poseData.skeleton_connections.pose.forEach(([start, end]) => {
+                            if (frame.pose[start] && frame.pose[end] &&
+                                frame.pose[start].visibility > 0.5 && frame.pose[end].visibility > 0.5) {
+                                const geometry = new THREE.BufferGeometry();
+                                const vertices = new Float32Array([
+                                    frame.pose[start].x - 0.5, 1 - frame.pose[start].y, -frame.pose[start].z,
+                                    frame.pose[end].x - 0.5, 1 - frame.pose[end].y, -frame.pose[end].z
+                                ]);
+                                geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+                                const material = new THREE.LineBasicMaterial({ color: 0x0099ff, linewidth: 2 });
+                                const line = new THREE.Line(geometry, material);
+                                scene.add(line);
+                            }
+                        });
+                    }
+                }
+
+                renderer.render(scene, camera);
+
+                frameIndex++;
+                setTimeout(animateFrame, 1000 / (poseData.fps || 25));
+            }
+
+            animateFrame();
+        }
+
+        // Option 3: Ready Player Me Avatar
+        let avatarScene = null;
+        let avatarRenderer = null;
+        let avatarCamera = null;
+        let avatarMixer = null;
+        let avatarModel = null;
+
+        async function displayAsAvatar(data) {
+            const signs = data.sign_sequence;
+            const avatarInfo = document.getElementById('avatar-info');
+            const avatarCanvas = document.getElementById('avatar-canvas');
+
+            // Get first sign with video URL
+            const firstSign = signs.find(s => s.video_url);
+
+            if (!firstSign) {
+                avatarInfo.textContent = 'No video available for avatar animation';
+                return;
+            }
+
+            avatarInfo.textContent = `Loading avatar animation for "${firstSign.gloss}"...`;
+
+            try {
+                // Initialize Three.js scene if not already done
+                if (!avatarScene) {
+                    initAvatarScene(avatarCanvas);
+                }
+
+                // Get animation data from backend
+                const animResponse = await fetch(`${API_BASE}/api/avatar/animate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        video_url: firstSign.video_url,
+                        max_frames: 30,
+                        fps: 30.0,
+                        smoothing: 0.3
+                    })
+                });
+
+                const animData = await animResponse.json();
+
+                if (animData.success) {
+                    // Apply animation to avatar
+                    applyAnimationToAvatar(animData.animation_clip);
+
+                    avatarInfo.innerHTML = `
+                        <strong>✅ Avatar animated!</strong><br>
+                        Sign: ${firstSign.gloss}<br>
+                        Duration: ${animData.duration.toFixed(2)}s<br>
+                        Frames: ${animData.frame_count}
+                    `;
+                } else {
+                    avatarInfo.textContent = `Error: ${animData.error}`;
+                }
+
+            } catch (error) {
+                console.error('Avatar animation error:', error);
+                avatarInfo.innerHTML = `
+                    <strong>Avatar Animation Preview</strong><br>
+                    Using pose-driven animation<br>
+                    <small>Ensure backend is running with avatar endpoints</small>
+                `;
+                // Show fallback stick figure avatar
+                showFallbackAvatar(avatarCanvas);
+            }
+        }
+
+        function initAvatarScene(canvas) {
+            // Create Three.js scene
+            avatarScene = new THREE.Scene();
+            avatarScene.background = new THREE.Color(0x1a1a1a);
+
+            avatarCamera = new THREE.PerspectiveCamera(
+                45,
+                canvas.width / canvas.height,
+                0.1,
+                1000
+            );
+            avatarCamera.position.set(0, 1.5, 3);
+            avatarCamera.lookAt(0, 1, 0);
+
+            avatarRenderer = new THREE.WebGLRenderer({
+                canvas: canvas,
+                antialias: true
+            });
+            avatarRenderer.setSize(canvas.width, canvas.height);
+            avatarRenderer.shadowMap.enabled = true;
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            avatarScene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(2, 4, 3);
+            directionalLight.castShadow = true;
+            avatarScene.add(directionalLight);
+
+            const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+            fillLight.position.set(-2, 2, -3);
+            avatarScene.add(fillLight);
+
+            // Ground plane
+            const groundGeometry = new THREE.PlaneGeometry(10, 10);
+            const groundMaterial = new THREE.MeshStandardMaterial({
+                color: 0x333333,
+                roughness: 0.8
+            });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            avatarScene.add(ground);
+
+            // Try to load Ready Player Me avatar (fallback to simple humanoid)
+            loadAvatar();
+        }
+
+        function loadAvatar() {
+            // Use a demo Ready Player Me avatar URL
+            // Users can replace this with their own avatar from https://readyplayer.me
+            const avatarUrl = 'https://models.readyplayer.me/64bfa16f0e72c63d7c3934a6.glb';
+
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                avatarUrl,
+                (gltf) => {
+                    avatarModel = gltf.scene;
+                    avatarModel.position.set(0, 0, 0);
+                    avatarModel.scale.set(1, 1, 1);
+                    avatarModel.castShadow = true;
+                    avatarScene.add(avatarModel);
+
+                    // Setup animation mixer
+                    avatarMixer = new THREE.AnimationMixer(avatarModel);
+
+                    // Start render loop
+                    animateAvatar();
+                },
+                (progress) => {
+                    const percent = (progress.loaded / progress.total * 100).toFixed(0);
+                    document.getElementById('avatar-info').textContent =
+                        `Loading avatar: ${percent}%`;
+                },
+                (error) => {
+                    console.warn('Could not load Ready Player Me avatar, using fallback');
+                    createFallbackHumanoid();
+                    animateAvatar();
+                }
+            );
+        }
+
+        function createFallbackHumanoid() {
+            // Create simple humanoid as fallback
+            const humanoid = new THREE.Group();
+
+            // Body
+            const bodyGeo = new THREE.CylinderGeometry(0.2, 0.25, 0.8, 8);
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x3498db });
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 1;
+            body.castShadow = true;
+            humanoid.add(body);
+
+            // Head
+            const headGeo = new THREE.SphereGeometry(0.15, 16, 16);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xffd4a3 });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 1.5;
+            head.castShadow = true;
+            humanoid.add(head);
+
+            // Arms
+            const armGeo = new THREE.CylinderGeometry(0.05, 0.05, 0.6, 8);
+            const armMat = new THREE.MeshStandardMaterial({ color: 0xffd4a3 });
+
+            const leftArm = new THREE.Mesh(armGeo, armMat);
+            leftArm.position.set(-0.3, 1, 0);
+            leftArm.rotation.z = Math.PI / 6;
+            leftArm.castShadow = true;
+            humanoid.add(leftArm);
+
+            const rightArm = new THREE.Mesh(armGeo, armMat);
+            rightArm.position.set(0.3, 1, 0);
+            rightArm.rotation.z = -Math.PI / 6;
+            rightArm.castShadow = true;
+            humanoid.add(rightArm);
+
+            // Legs
+            const legGeo = new THREE.CylinderGeometry(0.08, 0.06, 0.8, 8);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50 });
+
+            const leftLeg = new THREE.Mesh(legGeo, legMat);
+            leftLeg.position.set(-0.12, 0.2, 0);
+            leftLeg.castShadow = true;
+            humanoid.add(leftLeg);
+
+            const rightLeg = new THREE.Mesh(legGeo, legMat);
+            rightLeg.position.set(0.12, 0.2, 0);
+            rightLeg.castShadow = true;
+            humanoid.add(rightLeg);
+
+            avatarModel = humanoid;
+            avatarScene.add(humanoid);
+        }
+
+        function applyAnimationToAvatar(animationClip) {
+            if (!avatarMixer || !avatarModel) {
+                console.warn('Avatar not loaded yet');
+                return;
+            }
+
+            // Clear existing animations
+            avatarMixer.stopAllAction();
+
+            // Convert our animation clip format to Three.js AnimationClip
+            const tracks = [];
+
+            for (const track of animationClip.tracks) {
+                const boneName = track.name.split('.')[0];
+                const bone = avatarModel.getObjectByName(boneName);
+
+                if (bone) {
+                    // Create quaternion track from euler rotations
+                    const times = new Float32Array(track.times);
+                    const values = new Float32Array(track.values.length * 4);
+
+                    track.values.forEach((rot, i) => {
+                        const euler = new THREE.Euler(
+                            rot.x * Math.PI / 180,
+                            rot.y * Math.PI / 180,
+                            rot.z * Math.PI / 180,
+                            'XYZ'
+                        );
+                        const quat = new THREE.Quaternion().setFromEuler(euler);
+                        values[i * 4] = quat.x;
+                        values[i * 4 + 1] = quat.y;
+                        values[i * 4 + 2] = quat.z;
+                        values[i * 4 + 3] = quat.w;
+                    });
+
+                    const quatTrack = new THREE.QuaternionKeyframeTrack(
+                        boneName + '.quaternion',
+                        times,
+                        values
+                    );
+                    tracks.push(quatTrack);
+                }
+            }
+
+            if (tracks.length > 0) {
+                const clip = new THREE.AnimationClip('ASL_Sign', animationClip.duration, tracks);
+                const action = avatarMixer.clipAction(clip);
+                action.setLoop(THREE.LoopRepeat);
+                action.play();
+            }
+        }
+
+        function animateAvatar() {
+            requestAnimationFrame(animateAvatar);
+
+            // Update animations
+            if (avatarMixer) {
+                avatarMixer.update(0.016); // ~60fps
+            }
+
+            // Rotate camera slowly
+            const time = Date.now() * 0.0001;
+            avatarCamera.position.x = Math.sin(time) * 3;
+            avatarCamera.position.z = Math.cos(time) * 3;
+            avatarCamera.lookAt(0, 1, 0);
+
+            avatarRenderer.render(avatarScene, avatarCamera);
+        }
+
+        function showFallbackAvatar(canvas) {
+            // Show a simple animated stick figure as fallback
+            if (!avatarScene) {
+                initAvatarScene(canvas);
+            }
+        }
+    </script>
+</body>
+</html>
