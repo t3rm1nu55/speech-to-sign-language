@@ -1,10 +1,11 @@
 {
   "metadata": {
-    "version": "1.0",
+    "version": "1.1",
     "description": "ASL Sign Descriptions using 5 Parameters Framework",
-    "total_signs": 30,
-    "source": "ASL Linguistic Research + WLASL Video Analysis",
-    "date_created": "2025-11-08"
+    "total_signs": 39,
+    "source": "ASL Linguistic Research + WLASL Video Analysis + ASL Bricks Observation",
+    "date_created": "2025-11-08",
+    "date_updated": "2025-11-08"
   },
   "signs": [
     {
@@ -554,6 +555,173 @@
       "movement_path": "F handshapes start together, circle outward and around to meet again",
       "notes": "F for family. Circle shows family group/unity.",
       "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "NEW",
+      "english_word": "new",
+      "dominant_hand": {
+        "handshape": "flat",
+        "location": "other_hand",
+        "palm_orientation": "up"
+      },
+      "non_dominant_hand": {
+        "handshape": "flat",
+        "location": "neutral_space",
+        "palm_orientation": "up"
+      },
+      "movement": "forward",
+      "is_two_handed": true,
+      "symmetrical": false,
+      "movement_path": "Dominant hand brushes across non-dominant palm in scooping motion",
+      "notes": "Like scooping up something fresh/new from the palm",
+      "source": "ASL Bricks video observation",
+      "verified": false
+    },
+    {
+      "gloss": "HARD",
+      "english_word": "hard",
+      "dominant_hand": {
+        "handshape": "V",
+        "location": "other_hand",
+        "palm_orientation": "down"
+      },
+      "non_dominant_hand": {
+        "handshape": "fist",
+        "location": "neutral_space",
+        "palm_orientation": "up"
+      },
+      "movement": "down",
+      "is_two_handed": true,
+      "symmetrical": false,
+      "movement_path": "V hand strikes down onto back of non-dominant fist",
+      "notes": "Strike shows hardness/difficulty. V hand hits solid fist.",
+      "source": "ASL Bricks video observation",
+      "verified": false
+    },
+    {
+      "gloss": "PRETTY",
+      "english_word": "pretty",
+      "dominant_hand": {
+        "handshape": "5",
+        "location": "face",
+        "palm_orientation": "in"
+      },
+      "movement": "circle",
+      "is_two_handed": false,
+      "movement_path": "Open hand circles around face, closes to O shape at chin",
+      "non_manual_markers": ["smile"],
+      "notes": "Hand circles face (beautiful) and closes. Similar to BEAUTIFUL.",
+      "source": "ASL Bricks video observation",
+      "verified": false
+    },
+    {
+      "gloss": "MORE",
+      "english_word": "more",
+      "dominant_hand": {
+        "handshape": "O",
+        "location": "neutral_space",
+        "palm_orientation": "in"
+      },
+      "non_dominant_hand": {
+        "handshape": "O",
+        "location": "neutral_space",
+        "palm_orientation": "in"
+      },
+      "movement": "contact",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "O hands tap fingertips together repeatedly",
+      "notes": "Flat O shapes tap together - adding more. Symmetric sign.",
+      "source": "ASL Bricks video observation",
+      "verified": false
+    },
+    {
+      "gloss": "FOOD",
+      "english_word": "food",
+      "dominant_hand": {
+        "handshape": "O",
+        "location": "mouth",
+        "palm_orientation": "in"
+      },
+      "movement": "contact",
+      "is_two_handed": false,
+      "movement_path": "O hand taps near/at mouth (eating motion)",
+      "notes": "Represents bringing food to mouth. EAT is similar but single motion.",
+      "source": "ASL Bricks video observation",
+      "verified": false
+    },
+    {
+      "gloss": "HOUSE",
+      "english_word": "house",
+      "dominant_hand": {
+        "handshape": "flat",
+        "location": "high_space",
+        "palm_orientation": "forward"
+      },
+      "non_dominant_hand": {
+        "handshape": "flat",
+        "location": "high_space",
+        "palm_orientation": "forward"
+      },
+      "movement": "down",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "Hands form roof shape at top, move down and apart to show walls",
+      "notes": "Outlines shape of house - roof and walls",
+      "source": "ASL Bricks video observation",
+      "verified": false
+    },
+    {
+      "gloss": "TODAY",
+      "english_word": "today",
+      "dominant_hand": {
+        "handshape": "Y",
+        "location": "chest",
+        "palm_orientation": "up"
+      },
+      "non_dominant_hand": {
+        "handshape": "Y",
+        "location": "chest",
+        "palm_orientation": "up"
+      },
+      "movement": "down",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "Both Y hands move down together in front of chest",
+      "notes": "NOW + DAY compound. Y hands drop down.",
+      "source": "ASL Bricks video observation",
+      "verified": false
+    },
+    {
+      "gloss": "FATHER",
+      "english_word": "father",
+      "dominant_hand": {
+        "handshape": "5",
+        "location": "forehead",
+        "palm_orientation": "out"
+      },
+      "movement": "contact",
+      "is_two_handed": false,
+      "movement_path": "Open hand with thumb touches forehead (male sign area)",
+      "notes": "5 hand at forehead. Male signs are at forehead, female at chin.",
+      "source": "ASL Bricks video observation",
+      "verified": false
+    },
+    {
+      "gloss": "TWO",
+      "english_word": "two",
+      "dominant_hand": {
+        "handshape": "2",
+        "location": "neutral_space",
+        "palm_orientation": "out",
+        "fingers_extended": ["index", "middle"]
+      },
+      "movement": "none",
+      "is_two_handed": false,
+      "movement_path": "Hold up two fingers",
+      "notes": "Number 2 - index and middle fingers extended, palm out",
+      "source": "ASL Bricks video observation",
       "verified": false
     }
   ]
