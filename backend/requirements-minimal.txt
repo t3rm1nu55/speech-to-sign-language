@@ -1,0 +1,24 @@
+# Minimal requirements for on-device deployment
+# Use this for mobile/edge devices with limited resources
+
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+
+# Database (SQLite for on-device)
+sqlalchemy==2.0.23
+
+# Validation & Settings
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Speech Recognition - Whisper only (smallest model)
+openai-whisper==20231117
+torch==2.1.0
+torchaudio==2.1.0
+numpy==1.24.3
+
+# Basic utilities
+python-dotenv==1.0.0
+httpx==0.25.2
