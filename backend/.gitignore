@@ -63,6 +63,8 @@ uploads/
 outputs/
 logs/
 data/sign_videos/
+data/wlasl_repo/
+data/asl_databases/
 *.log
 *.db
 *.sqlite
