@@ -55,16 +55,30 @@ class PoseExtractionService:
 
         # Download video if URL
         if video_source.startswith('http'):
-            video_data = self._download_video(video_source)
-            if not video_data:
-                return {"error": "Failed to download video", "frames": []}
-            cap = cv2.VideoCapture(video_data)
+            video_path = self._download_video(video_source)
+            if not video_path:
+                return {
+                    "success": False,
+                    "error": "Failed to download video",
+                    "frames": [],
+                    "fps": 0,
+                    "total_frames": 0,
+                    "processed_frames": 0
+                }
+            cap = cv2.VideoCapture(video_path)
         else:
             cap = cv2.VideoCapture(video_source)
 
         if not cap.isOpened():
             logger.error(f"Failed to open video: {video_source}")
-            return {"error": "Failed to open video", "frames": []}
+            return {
+                "success": False,
+                "error": "Failed to open video",
+                "frames": [],
+                "fps": 0,
+                "total_frames": 0,
+                "processed_frames": 0
+            }
 
         frames_data = []
         frame_count = 0
@@ -93,23 +107,68 @@ class PoseExtractionService:
 
         cap.release()
 
+        # Determine success
+        success = len(frames_data) > 0
+
         return {
+            "success": success,
             "fps": fps,
             "total_frames": total_frames,
             "processed_frames": frame_count,
             "frames": frames_data
         }
 
-    def _download_video(self, url: str, timeout: int = 10) -> Optional[str]:
-        """Download video from URL to temporary location"""
+    def _download_video(self, url: str, timeout: int = 30) -> Optional[str]:
+        """
+        Download video from URL to temporary location
+
+        Uses yt-dlp for YouTube/streaming sites, requests for direct URLs
+        """
+        import tempfile
+        import os
+
+        temp_path = f"/tmp/video_{abs(hash(url))}.mp4"
+
+        # Try yt-dlp first for YouTube and other streaming sites
+        if 'youtube.com' in url or 'youtu.be' in url or 'vimeo.com' in url:
+            try:
+                import yt_dlp
+
+                ydl_opts = {
+                    'format': 'best[ext=mp4]/best',
+                    'outtmpl': temp_path,
+                    'quiet': True,
+                    'no_warnings': True,
+                    'extract_flat': False,
+                    'socket_timeout': timeout,
+                }
+
+                logger.info(f"Downloading with yt-dlp: {url}")
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    ydl.download([url])
+
+                if os.path.exists(temp_path):
+                    logger.info(f"Downloaded video to {temp_path}")
+                    return temp_path
+                else:
+                    logger.error("yt-dlp download completed but file not found")
+                    return None
+
+            except ImportError:
+                logger.warning("yt-dlp not installed, falling back to requests")
+            except Exception as e:
+                logger.error(f"yt-dlp download failed: {str(e)}")
+                # Fall through to try requests
+
+        # Fall back to requests for direct video URLs
         try:
+            logger.info(f"Downloading with requests: {url}")
             response = requests.get(url, timeout=timeout, stream=True)
             if response.status_code == 200:
-                # Save to temporary file
-                temp_path = f"/tmp/video_{hash(url)}.mp4"
                 with open(temp_path, 'wb') as f:
                     for chunk in response.iter_content(chunk_size=8192):
                         f.write(chunk)
+                logger.info(f"Downloaded video to {temp_path}")
                 return temp_path
             else:
                 logger.error(f"Failed to download video: HTTP {response.status_code}")

@@ -16,12 +16,35 @@ class Handshape(str, Enum):
     THREE = "3"  # Thumb, index, middle extended
     FOUR = "4"  # Four fingers extended, thumb tucked
     FIVE = "5"  # All fingers extended (open hand)
+    SIX = "6"  # Three fingers extended, thumb and pinky touch
+    SEVEN = "7"  # Four fingers extended in 7 shape
+    EIGHT = "8"  # Index and middle touch thumb
+    NINE = "9"  # Index and thumb form circle, others extended
+    ZERO = "0"  # Thumb and index form O, others closed
 
-    # Letters and common shapes
+    # Letters (common handshapes)
     A = "A"  # Closed fist, thumb to side
     B = "B"  # Flat hand, fingers together, thumb across palm
     C = "C"  # Curved hand forming C shape
+    D = "D"  # Index up, thumb touches middle/ring/pinky
+    E = "E"  # Fingers curl to touch thumb pad
+    F = "F"  # Index and thumb touch in circle, other fingers extended
+    G = "G"  # Index and thumb extended sideways
+    H = "H"  # Index and middle extended sideways
+    I = "I"  # Pinky extended
+    K = "K"  # Index and middle up, thumb touches middle
+    L = "L"  # Index and thumb form L shape
+    M = "M"  # Thumb under first three fingers
+    N = "N"  # Thumb under first two fingers
     O = "O"  # Fingers and thumb forming circle
+    R = "R"  # Index and middle crossed
+    S = "S"  # Fist with thumb in front
+    T = "T"  # Thumb between index and middle
+    U = "U"  # Index and middle together, extended up
+    V = "V"  # Index and middle spread in V
+    W = "W"  # Three fingers (index, middle, ring) extended
+    X = "X"  # Index bent in hook shape
+    Y = "Y"  # Thumb and pinky extended
 
     # Functional shapes
     FIST = "fist"  # Closed fist
