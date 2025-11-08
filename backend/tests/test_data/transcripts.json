@@ -1,0 +1,86 @@
+{
+  "test_cases": [
+    {
+      "id": "greeting_hello",
+      "audio_file": "hello.wav",
+      "transcript": "Hello",
+      "expected_gloss": "HELLO",
+      "sign_language": "ASL",
+      "category": "greeting"
+    },
+    {
+      "id": "greeting_how_are_you",
+      "audio_file": "how_are_you.wav",
+      "transcript": "How are you?",
+      "expected_gloss": "HOW YOU",
+      "sign_language": "ASL",
+      "category": "greeting"
+    },
+    {
+      "id": "polite_thank_you",
+      "audio_file": "thank_you.wav",
+      "transcript": "Thank you",
+      "expected_gloss": "THANK-YOU",
+      "sign_language": "ASL",
+      "category": "polite"
+    },
+    {
+      "id": "polite_please",
+      "audio_file": "please.wav",
+      "transcript": "Please",
+      "expected_gloss": "PLEASE",
+      "sign_language": "ASL",
+      "category": "polite"
+    },
+    {
+      "id": "request_help",
+      "audio_file": "help.wav",
+      "transcript": "I need help",
+      "expected_gloss_contains": ["NEED", "HELP"],
+      "sign_language": "ASL",
+      "category": "request"
+    },
+    {
+      "id": "response_yes",
+      "audio_file": "yes.wav",
+      "transcript": "Yes",
+      "expected_gloss": "YES",
+      "sign_language": "ASL",
+      "category": "response"
+    },
+    {
+      "id": "response_no",
+      "audio_file": "no.wav",
+      "transcript": "No",
+      "expected_gloss": "NO",
+      "sign_language": "ASL",
+      "category": "response"
+    },
+    {
+      "id": "complex_question",
+      "audio_file": "what_is_your_name.wav",
+      "transcript": "What is your name?",
+      "expected_gloss": "YOUR NAME WHAT",
+      "sign_language": "ASL",
+      "category": "question",
+      "note": "ASL question words typically move to end"
+    },
+    {
+      "id": "complex_sentence",
+      "audio_file": "i_am_going_to_store.wav",
+      "transcript": "I am going to the store",
+      "expected_gloss_contains": ["I", "GO", "STORE"],
+      "sign_language": "ASL",
+      "category": "statement",
+      "note": "ASL drops articles and auxiliary verbs"
+    },
+    {
+      "id": "emergency",
+      "audio_file": "emergency.wav",
+      "transcript": "I need help now",
+      "expected_gloss_contains": ["NEED", "HELP", "NOW"],
+      "sign_language": "ASL",
+      "category": "emergency"
+    }
+  ]
+}

@@ -271,19 +271,62 @@ alembic upgrade head
 
 ## Testing
 
+The backend includes a comprehensive test suite using real speech datasets from LibriSpeech and Common Voice.
+
+### Quick Test
+
 ```bash
-# Install test dependencies
-pip install pytest pytest-asyncio pytest-cov httpx
+# Run quick tests (no audio download required)
+./run_tests.sh --quick
 
-# Run tests
-pytest
-
-# With coverage
-pytest --cov=app --cov-report=html
-
-# Run specific test file
-pytest tests/test_speech_recognition.py
+# Or manually
+pytest tests/test_api_health.py tests/test_api_translation.py -v
 ```
+
+### Comprehensive Testing with Real Audio
+
+```bash
+# Download test data and run all tests
+./run_tests.sh --download
+
+# Or step by step:
+# 1. Download real speech datasets (LibriSpeech, Common Voice)
+python tests/download_test_data.py
+
+# 2. Run comprehensive test suite
+python tests/run_comprehensive_tests.py
+
+# 3. Or use pytest directly
+pytest tests/ -v
+```
+
+### Test Coverage
+
+The test suite includes:
+
+- **API Tests**: All endpoints (health, speech, translation, animation)
+- **Service Tests**: Unit tests for core services
+- **Real Audio Tests**: Speech recognition with LibriSpeech dataset
+  - Word Error Rate (WER) calculation
+  - Accuracy metrics
+- **Integration Tests**: Complete speech-to-sign pipeline
+  - End-to-end testing with real audio
+  - Performance benchmarking
+
+### Test Metrics
+
+The tests generate detailed reports:
+- `tests/test_data/TEST_REPORT.md` - Human-readable summary
+- `tests/test_data/comprehensive_test_report.json` - Detailed metrics
+- `tests/test_data/speech_recognition_results.json` - WER and accuracy
+
+### Expected Performance
+
+- **Speech Recognition (Whisper base on LibriSpeech clean)**: WER < 5%
+- **Translation**: > 95% coverage for common phrases
+- **Total Pipeline**: < 5 seconds per utterance (CPU)
+
+For detailed testing documentation, see [tests/README.md](tests/README.md)
 
 ## Production Deployment
 

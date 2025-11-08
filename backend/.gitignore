@@ -93,6 +93,12 @@ tmp/
 temp/
 *.tmp
 
+# Test data (audio files are large, download separately)
+tests/test_data/audio/
+tests/test_data/*_metadata.json
+tests/test_data/*_results.json
+tests/test_data/TEST_REPORT.md
+
 # Documentation build
 docs/_build/
 site/
