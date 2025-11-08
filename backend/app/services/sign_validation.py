@@ -335,8 +335,8 @@ class SignValidationService:
         # Analyze handshape from hand landmarks (use active frames)
         features['handshape'] = self._detect_handshape(active_frames)
 
-        # Analyze location (where in signing space)
-        features['location'] = self._detect_location(features['hand_positions'])
+        # Analyze location (where in signing space) - pass frames for pose context
+        features['location'] = self._detect_location(features['hand_positions'], valid_frames)
 
         # Analyze movement
         features['movement'] = self._detect_movement(features['hand_positions'])
@@ -394,101 +394,362 @@ class SignValidationService:
         """
         Classify handshape based on finger positions
 
-        Simplified heuristic analysis
+        Improved algorithm with better finger extension detection
+        and more handshape patterns
         """
         if len(hand_landmarks) < 21:
             return Handshape.UNKNOWN
 
-        # Calculate which fingers are extended
+        # Calculate which fingers are extended using improved heuristics
         wrist = hand_landmarks[0]
 
-        # Check each finger tip vs base
+        # For each finger, check both extension and curl
         fingers_extended = []
+        finger_curls = []
 
-        # Thumb (1-4)
+        # Thumb (1-4): landmarks are tip=4, ip=3, mcp=2, cmc=1
         thumb_tip = hand_landmarks[4]
-        thumb_base = hand_landmarks[2]
-        thumb_dist = self._distance_3d(thumb_tip, wrist)
-        thumb_base_dist = self._distance_3d(thumb_base, wrist)
-        fingers_extended.append(thumb_dist > thumb_base_dist * 1.2)
+        thumb_ip = hand_landmarks[3]
+        thumb_mcp = hand_landmarks[2]
 
-        # Index (5-8)
+        # Thumb extension: tip distance from wrist vs mcp distance
+        thumb_tip_dist = self._distance_3d(thumb_tip, wrist)
+        thumb_mcp_dist = self._distance_3d(thumb_mcp, wrist)
+        thumb_extended = thumb_tip_dist > thumb_mcp_dist * 1.4  # Stricter threshold
+        fingers_extended.append(thumb_extended)
+
+        # Thumb curl: tip distance from mcp vs ip distance from mcp
+        thumb_curl = self._distance_3d(thumb_tip, thumb_mcp) / max(self._distance_3d(thumb_ip, thumb_mcp), 0.01)
+        finger_curls.append(thumb_curl)
+
+        # Index finger (5-8): landmarks are tip=8, dip=7, pip=6, mcp=5
         index_tip = hand_landmarks[8]
-        index_base = hand_landmarks[5]
-        index_dist = self._distance_3d(index_tip, wrist)
-        index_base_dist = self._distance_3d(index_base, wrist)
-        fingers_extended.append(index_dist > index_base_dist * 1.3)
+        index_dip = hand_landmarks[7]
+        index_pip = hand_landmarks[6]
+        index_mcp = hand_landmarks[5]
 
-        # Middle (9-12)
+        index_extended = self._is_finger_extended(index_tip, index_pip, index_mcp, wrist)
+        fingers_extended.append(index_extended)
+        index_curl = self._calculate_finger_curl(index_tip, index_dip, index_pip, index_mcp)
+        finger_curls.append(index_curl)
+
+        # Middle finger (9-12)
         middle_tip = hand_landmarks[12]
-        middle_base = hand_landmarks[9]
-        middle_dist = self._distance_3d(middle_tip, wrist)
-        middle_base_dist = self._distance_3d(middle_base, wrist)
-        fingers_extended.append(middle_dist > middle_base_dist * 1.3)
+        middle_dip = hand_landmarks[11]
+        middle_pip = hand_landmarks[10]
+        middle_mcp = hand_landmarks[9]
 
-        # Ring (13-16)
+        middle_extended = self._is_finger_extended(middle_tip, middle_pip, middle_mcp, wrist)
+        fingers_extended.append(middle_extended)
+        middle_curl = self._calculate_finger_curl(middle_tip, middle_dip, middle_pip, middle_mcp)
+        finger_curls.append(middle_curl)
+
+        # Ring finger (13-16)
         ring_tip = hand_landmarks[16]
-        ring_base = hand_landmarks[13]
-        ring_dist = self._distance_3d(ring_tip, wrist)
-        ring_base_dist = self._distance_3d(ring_base, wrist)
-        fingers_extended.append(ring_dist > ring_base_dist * 1.3)
+        ring_dip = hand_landmarks[15]
+        ring_pip = hand_landmarks[14]
+        ring_mcp = hand_landmarks[13]
 
-        # Pinky (17-20)
+        ring_extended = self._is_finger_extended(ring_tip, ring_pip, ring_mcp, wrist)
+        fingers_extended.append(ring_extended)
+        ring_curl = self._calculate_finger_curl(ring_tip, ring_dip, ring_pip, ring_mcp)
+        finger_curls.append(ring_curl)
+
+        # Pinky finger (17-20)
         pinky_tip = hand_landmarks[20]
-        pinky_base = hand_landmarks[17]
-        pinky_dist = self._distance_3d(pinky_tip, wrist)
-        pinky_base_dist = self._distance_3d(pinky_base, wrist)
-        fingers_extended.append(pinky_dist > pinky_base_dist * 1.3)
+        pinky_dip = hand_landmarks[19]
+        pinky_pip = hand_landmarks[18]
+        pinky_mcp = hand_landmarks[17]
 
-        # Classify based on extended fingers
+        pinky_extended = self._is_finger_extended(pinky_tip, pinky_pip, pinky_mcp, wrist)
+        fingers_extended.append(pinky_extended)
+        pinky_curl = self._calculate_finger_curl(pinky_tip, pinky_dip, pinky_pip, pinky_mcp)
+        finger_curls.append(pinky_curl)
+
+        # Count extended fingers
         num_extended = sum(fingers_extended)
 
-        if num_extended == 5:
-            return Handshape.FIVE
-        elif num_extended == 4 and not fingers_extended[0]:  # Thumb not extended
-            return Handshape.FOUR
-        elif num_extended == 1 and fingers_extended[1]:  # Only index
-            return Handshape.ONE
-        elif num_extended == 2 and fingers_extended[1] and fingers_extended[2]:
-            return Handshape.TWO
-        elif num_extended == 0:
+        # Average curl of four fingers (excluding thumb)
+        avg_finger_curl = np.mean(finger_curls[1:]) if len(finger_curls) > 1 else 1.0
+
+        # Classify based on finger patterns
+        # Number handshapes (most common)
+        if num_extended == 0:
+            # All fingers curled - could be FIST or A
+            # A has thumb to the side, FIST has thumb wrapped
+            if thumb_curl < 1.5:  # Thumb relatively extended to side
+                return Handshape.A
             return Handshape.FIST
-        else:
-            # Check for special shapes
-            if fingers_extended[1] and fingers_extended[4]:  # Index and pinky
+
+        elif num_extended == 1:
+            if fingers_extended[1]:  # Only index
+                return Handshape.ONE
+            elif fingers_extended[0]:  # Only thumb
+                # Thumb up gesture - but we don't have this enum, default to UNKNOWN
+                return Handshape.UNKNOWN
+
+        elif num_extended == 2:
+            if fingers_extended[1] and fingers_extended[2]:  # Index + middle
+                # Could be TWO or V
+                # Check if fingers are spread apart
+                spread = self._distance_3d(index_tip, middle_tip)
+                if spread > 0.08:  # Fingers spread apart
+                    return Handshape.V
+                return Handshape.TWO
+            elif fingers_extended[1] and fingers_extended[4]:  # Index + pinky
                 return Handshape.HORNS
+            elif fingers_extended[0] and fingers_extended[1]:  # Thumb + index
+                # Could be L or gun shape
+                return Handshape.L
+
+        elif num_extended == 3:
+            if fingers_extended[1] and fingers_extended[2] and fingers_extended[3]:
+                # Index, middle, ring = THREE
+                return Handshape.THREE
+            elif fingers_extended[0] and fingers_extended[1] and fingers_extended[4]:
+                # Thumb, index, pinky = I_LOVE_YOU
+                return Handshape.I_LOVE_YOU
+
+        elif num_extended == 4:
+            if not fingers_extended[0]:  # Four fingers, no thumb
+                return Handshape.FOUR
+            elif not fingers_extended[4]:  # Thumb + 3 fingers, no pinky
+                return Handshape.UNKNOWN
+
+        elif num_extended == 5:
+            # All fingers extended - could be FIVE or B (flat)
+            # Check if fingers are together (B) or spread (FIVE)
+            finger_spread = (
+                self._distance_3d(index_tip, middle_tip) +
+                self._distance_3d(middle_tip, ring_tip) +
+                self._distance_3d(ring_tip, pinky_tip)
+            ) / 3
+
+            if finger_spread < 0.04:  # Fingers together
+                return Handshape.B
+            return Handshape.FIVE
+
+        # Check for special shapes based on curl patterns
+        # C shape: all fingers partially curled in same direction
+        if 1.2 < avg_finger_curl < 2.0 and max(finger_curls[1:]) - min(finger_curls[1:]) < 0.5:
+            return Handshape.C
+
+        # O shape: fingers touching thumb (very curled, small circle)
+        if avg_finger_curl < 1.3 and num_extended <= 1:
+            # Check if index tip is close to thumb tip
+            if self._distance_3d(index_tip, thumb_tip) < 0.05:
+                return Handshape.O
+
+        # Flat hand: all fingers extended and together, thumb may be extended or tucked
+        if num_extended >= 4 and avg_finger_curl > 2.0:
+            return Handshape.FLAT
 
         return Handshape.UNKNOWN
 
-    def _detect_location(self, hand_positions: List[Dict]) -> Location:
+    def _is_finger_extended(self, tip: Dict, pip: Dict, mcp: Dict, wrist: Dict) -> bool:
         """
-        Detect location in signing space based on hand position
+        Determine if a finger is extended using improved heuristics
+
+        Args:
+            tip: Fingertip landmark
+            pip: Proximal interphalangeal joint (middle joint)
+            mcp: Metacarpophalangeal joint (base joint)
+            wrist: Wrist landmark
+
+        Returns:
+            True if finger is extended, False if curled
+        """
+        # Method 1: Compare tip-to-wrist distance vs mcp-to-wrist distance
+        tip_dist = self._distance_3d(tip, wrist)
+        mcp_dist = self._distance_3d(mcp, wrist)
+
+        # Balanced threshold: tip must be 1.3x farther than mcp
+        extension_ratio = tip_dist / max(mcp_dist, 0.01)
+
+        # Method 2: Check if tip is farther from wrist than pip
+        pip_dist = self._distance_3d(pip, wrist)
+        progressive = tip_dist > pip_dist * 0.95  # Allow small tolerance
+
+        # Finger is extended if either condition is strongly met
+        # OR both are moderately met
+        strong_extension = extension_ratio > 1.4
+        moderate_extension = extension_ratio > 1.25 and progressive
+
+        return strong_extension or moderate_extension
+
+    def _calculate_finger_curl(self, tip: Dict, dip: Dict, pip: Dict, mcp: Dict) -> float:
+        """
+        Calculate finger curl factor
+
+        Args:
+            tip: Fingertip landmark
+            dip: Distal interphalangeal joint
+            pip: Proximal interphalangeal joint
+            mcp: Metacarpophalangeal joint (base)
+
+        Returns:
+            Curl factor: higher = more extended, lower = more curled
+            Typical range: 0.5 (very curled) to 3.0 (fully extended)
+        """
+        # Calculate distances between joints
+        tip_to_mcp = self._distance_3d(tip, mcp)
+        dip_to_mcp = self._distance_3d(dip, mcp)
+        pip_to_mcp = self._distance_3d(pip, mcp)
+
+        # Full extension: tip is far from base
+        # Full curl: tip is close to base
+        # Normalize by pip distance to account for finger length
+        curl_factor = tip_to_mcp / max(pip_to_mcp, 0.01)
+
+        return curl_factor
+
+    def _detect_location(self, hand_positions: List[Dict], frames: List[Dict] = None) -> Location:
+        """
+        Detect location in signing space based on hand position relative to body
+
+        Uses facial landmarks and shoulders to determine precise location zones
         """
         if not hand_positions:
             return Location.UNKNOWN
 
-        # Use average position
-        avg_y = np.mean([p['y'] for p in hand_positions])
-        avg_x = np.mean([p['x'] for p in hand_positions])
+        # Use average hand position
+        avg_hand_y = np.mean([p['y'] for p in hand_positions])
+        avg_hand_x = np.mean([p['x'] for p in hand_positions])
 
-        # Check against location zones
-        for location, zone in self.LOCATION_ZONES.items():
-            if 'y_min' in zone and 'y_max' in zone:
-                if zone['y_min'] <= avg_y <= zone['y_max']:
-                    # Check x range if specified
-                    if 'x_range' in zone:
-                        if zone['x_range'][0] <= avg_x <= zone['x_range'][1]:
-                            return location
-                    elif 'x_center' in zone:
-                        # Check if near center
-                        if abs(avg_x - zone['x_center']) < 0.3:
-                            return location
+        # If frames available, use pose landmarks for relative positioning
+        if frames and len(frames) > 0:
+            # Extract key pose landmarks from first valid frame
+            for frame in frames:
+                pose = frame.get('pose')
+                if pose and len(pose) >= 33:
+                    # Get facial landmarks (MediaPipe indices)
+                    # 0=nose, 2=left_eye, 5=right_eye, 10=mouth
+                    nose = pose[0] if len(pose) > 0 else None
+                    left_eye = pose[2] if len(pose) > 2 else None
+                    right_eye = pose[5] if len(pose) > 5 else None
+                    mouth = pose[10] if len(pose) > 10 else None
 
-        return Location.NEUTRAL_SPACE
+                    # Get shoulder landmarks
+                    left_shoulder = pose[11] if len(pose) > 11 else None
+                    right_shoulder = pose[12] if len(pose) > 12 else None
+
+                    if nose and left_shoulder and right_shoulder:
+                        # Calculate relative zones based on actual body landmarks
+                        nose_y = nose['y']
+                        eye_y = (left_eye['y'] + right_eye['y']) / 2 if left_eye and right_eye else nose_y - 0.05
+                        mouth_y = mouth['y'] if mouth else nose_y + 0.05
+                        shoulder_y = (left_shoulder['y'] + right_shoulder['y']) / 2
+
+                        # Define face zones relative to landmarks
+                        forehead_y = eye_y - 0.08  # Above eyes
+                        chin_y = mouth_y + 0.08   # Below mouth
+                        neck_y = chin_y + 0.1     # Below chin
+
+                        # Chest area starts below shoulders
+                        chest_top = shoulder_y + 0.05
+                        chest_bottom = shoulder_y + 0.25
+
+                        # Check hand position against body-relative zones
+                        # Face zones (must also be near centerline)
+                        face_center_x = nose['x']
+                        near_center = abs(avg_hand_x - face_center_x) < 0.25
+
+                        if near_center:
+                            if avg_hand_y < eye_y:
+                                # Above eyes
+                                return Location.FOREHEAD
+                            elif avg_hand_y < nose_y:
+                                # Eye level
+                                return Location.EYE
+                            elif avg_hand_y < mouth_y:
+                                # Nose level
+                                return Location.NOSE
+                            elif avg_hand_y < chin_y:
+                                # Mouth level
+                                return Location.MOUTH
+                            elif avg_hand_y < neck_y:
+                                # Chin/jaw level
+                                return Location.CHIN
+                            elif avg_hand_y < chest_top:
+                                # Neck level
+                                return Location.NECK
+
+                        # Chest zone (wider area)
+                        if chest_top <= avg_hand_y <= chest_bottom:
+                            # Check if near body center
+                            body_center_x = (left_shoulder['x'] + right_shoulder['x']) / 2
+                            if abs(avg_hand_x - body_center_x) < 0.3:
+                                return Location.CHEST
+
+                        # Side locations (cheek, temple, ear, shoulder)
+                        if eye_y <= avg_hand_y <= chin_y:
+                            # Check if on left or right side of face
+                            if avg_hand_x < face_center_x - 0.15:
+                                # Left side of face
+                                if avg_hand_y < nose_y:
+                                    return Location.TEMPLE
+                                else:
+                                    return Location.CHEEK
+                            elif avg_hand_x > face_center_x + 0.15:
+                                # Right side of face
+                                if avg_hand_y < nose_y:
+                                    return Location.TEMPLE
+                                else:
+                                    return Location.CHEEK
+
+                        # Shoulder locations
+                        if abs(avg_hand_y - shoulder_y) < 0.1:
+                            if abs(avg_hand_x - left_shoulder['x']) < 0.15:
+                                return Location.SHOULDER
+                            elif abs(avg_hand_x - right_shoulder['x']) < 0.15:
+                                return Location.SHOULDER
+
+                        # High space (above forehead)
+                        if avg_hand_y < forehead_y:
+                            return Location.HIGH_SPACE
+
+                        # Low space (below chest)
+                        if avg_hand_y > chest_bottom:
+                            return Location.LOW_SPACE
+
+                        # Neutral space (in front of body, not touching)
+                        # Typically between shoulders and below chin
+                        if neck_y < avg_hand_y < chest_bottom:
+                            return Location.NEUTRAL_SPACE
+
+                        # Default to neutral space if none of the above
+                        return Location.NEUTRAL_SPACE
+
+                    # If we reached here, we have pose data but didn't match any zone
+                    # Return neutral space as reasonable default
+                    return Location.NEUTRAL_SPACE
+
+        # Fallback: use absolute normalized coordinates (if no pose data)
+        # This is a rough estimate when we don't have facial landmarks
+        if avg_hand_y < 0.2:
+            return Location.HIGH_SPACE
+        elif avg_hand_y < 0.35:
+            return Location.FOREHEAD
+        elif avg_hand_y < 0.45:
+            return Location.EYE
+        elif avg_hand_y < 0.55:
+            return Location.NOSE
+        elif avg_hand_y < 0.65:
+            return Location.MOUTH
+        elif avg_hand_y < 0.75:
+            return Location.CHIN
+        elif avg_hand_y < 0.85:
+            return Location.CHEST
+        elif avg_hand_y < 0.95:
+            return Location.NEUTRAL_SPACE
+        else:
+            return Location.LOW_SPACE
 
     def _detect_movement(self, hand_positions: List[Dict]) -> Movement:
         """
         Detect movement type from hand trajectory
+
+        Improved algorithm with better pattern recognition
         """
         if len(hand_positions) < 3:
             return Movement.NONE
@@ -501,36 +762,78 @@ class SignValidationService:
         dy = end['y'] - start['y']
         dz = end['z'] - start['z']
 
-        # Total distance
+        # Total displacement
         total_dist = math.sqrt(dx**2 + dy**2 + dz**2)
 
-        # If minimal movement, it's static
-        if total_dist < 0.05:
-            return Movement.NONE
+        # Calculate path length (sum of all segments)
+        path_length = 0.0
+        for i in range(1, len(hand_positions)):
+            prev = hand_positions[i-1]
+            curr = hand_positions[i]
+            segment = math.sqrt(
+                (curr['x'] - prev['x'])**2 +
+                (curr['y'] - prev['y'])**2 +
+                (curr['z'] - prev['z'])**2
+            )
+            path_length += segment
 
-        # Determine primary direction
+        # If minimal movement, check if it's CONTACT or truly NONE
+        if total_dist < 0.05:
+            # Very little displacement - could be contact or static
+            if path_length < 0.02:
+                return Movement.NONE
+            else:
+                # Some motion but no net displacement = possibly contact/tap
+                return Movement.CONTACT
+
+        # Check for circular motion first (before directional)
+        if self._is_circular_motion(hand_positions):
+            return Movement.CIRCLE
+
+        # Check for alternating/repeated motion
+        if self._is_alternating_motion(hand_positions):
+            return Movement.ALTERNATING
+
+        # Determine if movement is more complex than a straight line
+        # If path_length >> total_dist, it's a curved path
+        path_efficiency = total_dist / max(path_length, 0.01)
+
+        # Curved or complex movements
+        if path_efficiency < 0.6:
+            # Movement is not a straight line
+            # Could be arc, wave, zigzag
+            if self._is_arc_motion(hand_positions):
+                return Movement.ARC
+            return Movement.UNKNOWN
+
+        # Straight-line directional movements
         abs_dx = abs(dx)
         abs_dy = abs(dy)
         abs_dz = abs(dz)
 
         max_component = max(abs_dx, abs_dy, abs_dz)
 
-        if max_component == abs_dy:
+        # Determine primary direction (with stricter thresholds)
+        # Require at least 60% of movement in primary direction
+        if max_component == abs_dy and abs_dy > total_dist * 0.6:
             return Movement.UP if dy < 0 else Movement.DOWN
-        elif max_component == abs_dx:
+        elif max_component == abs_dx and abs_dx > total_dist * 0.6:
             return Movement.RIGHT if dx > 0 else Movement.LEFT
-        elif max_component == abs_dz:
+        elif max_component == abs_dz and abs_dz > total_dist * 0.6:
             return Movement.FORWARD if dz > 0 else Movement.BACKWARD
 
-        # Check for circular motion
-        if self._is_circular_motion(hand_positions):
-            return Movement.CIRCLE
+        # Mixed diagonal movement - check for dominant combination
+        if abs_dx > total_dist * 0.4 and abs_dy > total_dist * 0.4:
+            # Diagonal movement
+            return Movement.UNKNOWN  # Could add diagonal enums if needed
 
         return Movement.UNKNOWN
 
     def _is_circular_motion(self, positions: List[Dict]) -> bool:
         """
         Detect if motion is circular
+
+        Improved with angle change detection
         """
         if len(positions) < 10:
             return False
@@ -550,7 +853,122 @@ class SignValidationService:
         mean_dist = np.mean(distances)
 
         # If standard deviation is small relative to mean, it's circular
-        return (std_dev / mean_dist) < 0.3 if mean_dist > 0 else False
+        constant_radius = (std_dev / mean_dist) < 0.3 if mean_dist > 0.02 else False
+
+        if not constant_radius:
+            return False
+
+        # Also check for continuous angle change (should sum to ~360 degrees)
+        angles = []
+        for p in positions:
+            angle = math.atan2(p['y'] - center_y, p['x'] - center_x)
+            angles.append(angle)
+
+        # Calculate total angle traversed
+        total_angle_change = 0
+        for i in range(1, len(angles)):
+            delta = angles[i] - angles[i-1]
+            # Normalize to -pi to pi
+            if delta > math.pi:
+                delta -= 2 * math.pi
+            elif delta < -math.pi:
+                delta += 2 * math.pi
+            total_angle_change += abs(delta)
+
+        # If we've rotated at least 180 degrees (pi radians), it's circular
+        return total_angle_change > math.pi
+
+    def _is_alternating_motion(self, positions: List[Dict]) -> bool:
+        """
+        Detect if motion alternates (back and forth)
+
+        Examples: shaking head, waving hand
+        Requires significant and repeated reversals
+        """
+        if len(positions) < 8:
+            return False
+
+        # Check for direction reversals in primary axis
+        # Calculate velocities in each direction
+        velocities_x = []
+        velocities_y = []
+        velocities_z = []
+
+        for i in range(1, len(positions)):
+            prev = positions[i-1]
+            curr = positions[i]
+            velocities_x.append(curr['x'] - prev['x'])
+            velocities_y.append(curr['y'] - prev['y'])
+            velocities_z.append(curr['z'] - prev['z'])
+
+        # Count significant sign changes (direction reversals)
+        # Only count reversals where the velocity magnitude is significant
+        threshold = 0.005  # Minimum velocity to count as movement
+
+        reversals_x = sum(1 for i in range(1, len(velocities_x))
+                         if velocities_x[i] * velocities_x[i-1] < 0 and
+                         (abs(velocities_x[i]) > threshold or abs(velocities_x[i-1]) > threshold))
+        reversals_y = sum(1 for i in range(1, len(velocities_y))
+                         if velocities_y[i] * velocities_y[i-1] < 0 and
+                         (abs(velocities_y[i]) > threshold or abs(velocities_y[i-1]) > threshold))
+        reversals_z = sum(1 for i in range(1, len(velocities_z))
+                         if velocities_z[i] * velocities_z[i-1] < 0 and
+                         (abs(velocities_z[i]) > threshold or abs(velocities_z[i-1]) > threshold))
+
+        # Require at least 3 significant reversals (4+ direction changes) for alternating
+        # This ensures it's actually back-and-forth, not just one direction change
+        return max(reversals_x, reversals_y, reversals_z) >= 3
+
+    def _is_arc_motion(self, positions: List[Dict]) -> bool:
+        """
+        Detect if motion follows an arc (curved but not circular)
+
+        Arc has consistent curvature but doesn't complete a circle
+        """
+        if len(positions) < 5:
+            return False
+
+        # Calculate curvature at each point
+        # Curvature = change in direction angle / distance
+        curvatures = []
+
+        for i in range(1, len(positions) - 1):
+            prev = positions[i-1]
+            curr = positions[i]
+            next_p = positions[i+1]
+
+            # Vectors from curr to prev and curr to next
+            v1 = (prev['x'] - curr['x'], prev['y'] - curr['y'])
+            v2 = (next_p['x'] - curr['x'], next_p['y'] - curr['y'])
+
+            # Angle between vectors
+            dot = v1[0] * v2[0] + v1[1] * v2[1]
+            mag1 = math.sqrt(v1[0]**2 + v1[1]**2)
+            mag2 = math.sqrt(v2[0]**2 + v2[1]**2)
+
+            if mag1 > 0.001 and mag2 > 0.001:
+                cos_angle = dot / (mag1 * mag2)
+                # Clamp to [-1, 1] to avoid math domain error
+                cos_angle = max(-1, min(1, cos_angle))
+                angle = math.acos(cos_angle)
+                curvatures.append(angle)
+
+        if not curvatures:
+            return False
+
+        # Arc has consistent curvature (low variance)
+        # and significant total curvature (> 30 degrees)
+        mean_curvature = np.mean(curvatures)
+        std_curvature = np.std(curvatures)
+        total_curvature = sum(curvatures)
+
+        # Consistent curvature
+        consistent = (std_curvature / max(mean_curvature, 0.1)) < 0.5
+
+        # Significant curvature (> 30 degrees = 0.52 radians)
+        significant = total_curvature > 0.52
+
+        return consistent and significant
 
     def _detect_palm_orientation(self, frames: List[Dict]) -> PalmOrientation:
         """
