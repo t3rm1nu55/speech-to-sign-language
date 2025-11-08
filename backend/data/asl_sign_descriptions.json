@@ -1,0 +1,560 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "ASL Sign Descriptions using 5 Parameters Framework",
+    "total_signs": 30,
+    "source": "ASL Linguistic Research + WLASL Video Analysis",
+    "date_created": "2025-11-08"
+  },
+  "signs": [
+    {
+      "gloss": "HELLO",
+      "english_word": "hello",
+      "dominant_hand": {
+        "handshape": "flat",
+        "location": "forehead",
+        "palm_orientation": "out"
+      },
+      "movement": "forward",
+      "is_two_handed": false,
+      "movement_path": "Hand moves away from forehead in salute-like motion",
+      "non_manual_markers": ["smile"],
+      "notes": "Similar to military salute. Hand starts at temple/forehead and moves forward.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "HELP",
+      "english_word": "help",
+      "dominant_hand": {
+        "handshape": "A",
+        "location": "other_hand",
+        "palm_orientation": "up"
+      },
+      "non_dominant_hand": {
+        "handshape": "flat",
+        "location": "neutral_space",
+        "palm_orientation": "up"
+      },
+      "movement": "up",
+      "is_two_handed": true,
+      "symmetrical": false,
+      "movement_path": "Dominant fist rests on non-dominant flat palm and both move upward",
+      "notes": "Non-dominant hand supports dominant hand, lifting upward together",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "THANK-YOU",
+      "english_word": "thank you",
+      "dominant_hand": {
+        "handshape": "flat",
+        "location": "chin",
+        "palm_orientation": "in"
+      },
+      "movement": "forward",
+      "is_two_handed": false,
+      "movement_path": "Hand touches chin/mouth area and moves forward toward recipient",
+      "non_manual_markers": ["smile", "head_nod"],
+      "notes": "Similar to blowing a kiss. Often signed with warm facial expression.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "YOU",
+      "english_word": "you",
+      "dominant_hand": {
+        "handshape": "index",
+        "location": "neutral_space",
+        "palm_orientation": "forward",
+        "fingers_extended": ["index"]
+      },
+      "movement": "forward",
+      "is_two_handed": false,
+      "movement_path": "Index finger points toward person being addressed",
+      "notes": "Direct pointing gesture. Direction indicates referent.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "I",
+      "english_word": "I",
+      "dominant_hand": {
+        "handshape": "index",
+        "location": "chest",
+        "palm_orientation": "left",
+        "fingers_extended": ["index"]
+      },
+      "movement": "contact",
+      "is_two_handed": false,
+      "contact_location": "chest",
+      "movement_path": "Index finger touches center of chest",
+      "notes": "Points to self. Very straightforward pronoun.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "YES",
+      "english_word": "yes",
+      "dominant_hand": {
+        "handshape": "fist",
+        "location": "neutral_space",
+        "palm_orientation": "forward"
+      },
+      "movement": "nod",
+      "is_two_handed": false,
+      "movement_path": "Fist nods up and down like nodding head",
+      "non_manual_markers": ["head_nod"],
+      "notes": "Mimics head nod with hand. Often accompanied by actual head nod.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "NO",
+      "english_word": "no",
+      "dominant_hand": {
+        "handshape": "3",
+        "location": "neutral_space",
+        "palm_orientation": "forward",
+        "fingers_extended": ["thumb", "index", "middle"]
+      },
+      "movement": "close",
+      "is_two_handed": false,
+      "movement_path": "Thumb, index, and middle finger snap together (like snapping shut)",
+      "non_manual_markers": ["head_shake"],
+      "notes": "Quick closing motion. Often with head shake for emphasis.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "PLEASE",
+      "english_word": "please",
+      "dominant_hand": {
+        "handshape": "flat",
+        "location": "chest",
+        "palm_orientation": "in"
+      },
+      "movement": "circle",
+      "is_two_handed": false,
+      "movement_path": "Flat hand makes circular rubbing motion on chest",
+      "non_manual_markers": ["eyebrows_raised"],
+      "notes": "Circular motion centered on chest area",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "SORRY",
+      "english_word": "sorry",
+      "dominant_hand": {
+        "handshape": "fist",
+        "location": "chest",
+        "palm_orientation": "in"
+      },
+      "movement": "circle",
+      "is_two_handed": false,
+      "movement_path": "Fist makes circular rubbing motion on chest (like 'please' but with fist)",
+      "non_manual_markers": ["eyebrows_furrowed"],
+      "notes": "Similar to PLEASE but with closed fist and different facial expression",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "GOOD",
+      "english_word": "good",
+      "dominant_hand": {
+        "handshape": "flat",
+        "location": "mouth",
+        "palm_orientation": "in"
+      },
+      "movement": "down",
+      "is_two_handed": false,
+      "movement_path": "Flat hand touches chin/mouth, then moves down to rest on non-dominant palm",
+      "notes": "Starts at mouth (sign of satisfaction) and moves down",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "BAD",
+      "english_word": "bad",
+      "dominant_hand": {
+        "handshape": "flat",
+        "location": "mouth",
+        "palm_orientation": "in"
+      },
+      "movement": "down",
+      "is_two_handed": false,
+      "movement_path": "Flat hand at chin/mouth, then flips over as it moves away",
+      "notes": "Similar start to GOOD but hand rotates/flips downward",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "WHAT",
+      "english_word": "what",
+      "dominant_hand": {
+        "handshape": "5",
+        "location": "neutral_space",
+        "palm_orientation": "up",
+        "fingers_extended": ["thumb", "index", "middle", "ring", "pinky"]
+      },
+      "movement": "shake",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "Both hands with palms up, fingers wiggle/shake side to side",
+      "non_manual_markers": ["eyebrows_furrowed"],
+      "notes": "WH-question marker - requires eyebrows down. Hands shake in questioning manner.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "WHERE",
+      "english_word": "where",
+      "dominant_hand": {
+        "handshape": "index",
+        "location": "neutral_space",
+        "palm_orientation": "up",
+        "fingers_extended": ["index"]
+      },
+      "movement": "shake",
+      "is_two_handed": false,
+      "movement_path": "Index finger shakes side to side",
+      "non_manual_markers": ["eyebrows_furrowed"],
+      "notes": "WH-question. Index finger waves back and forth in questioning gesture.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "WHO",
+      "english_word": "who",
+      "dominant_hand": {
+        "handshape": "index",
+        "location": "mouth",
+        "palm_orientation": "left",
+        "fingers_extended": ["index"]
+      },
+      "movement": "circle",
+      "is_two_handed": false,
+      "movement_path": "Index finger makes small circles in front of mouth/chin",
+      "non_manual_markers": ["eyebrows_furrowed", "lips_pressed"],
+      "notes": "Circles around mouth area. Lips may form 'ooo' shape.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "HOW",
+      "english_word": "how",
+      "dominant_hand": {
+        "handshape": "bent",
+        "location": "neutral_space",
+        "palm_orientation": "down"
+      },
+      "non_dominant_hand": {
+        "handshape": "bent",
+        "location": "neutral_space",
+        "palm_orientation": "down"
+      },
+      "movement": "twist",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "Both hands (bent fingers) rotate/twist upward together",
+      "non_manual_markers": ["eyebrows_furrowed"],
+      "notes": "Both hands mirror each other, rotating from palms down to palms up",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "NAME",
+      "english_word": "name",
+      "dominant_hand": {
+        "handshape": "2",
+        "location": "other_hand",
+        "palm_orientation": "down",
+        "fingers_extended": ["index", "middle"]
+      },
+      "non_dominant_hand": {
+        "handshape": "2",
+        "location": "neutral_space",
+        "palm_orientation": "right",
+        "fingers_extended": ["index", "middle"]
+      },
+      "movement": "tap",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "Dominant hand 'H' taps on top of non-dominant 'H' (like X marking spot)",
+      "notes": "Forms an X shape with two H handshapes crossing",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "HAPPY",
+      "english_word": "happy",
+      "dominant_hand": {
+        "handshape": "flat",
+        "location": "chest",
+        "palm_orientation": "in"
+      },
+      "movement": "up",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "Both flat hands brush upward on chest in circular/upward motion",
+      "non_manual_markers": ["smile"],
+      "notes": "Upward brushing motion shows happiness rising. Big smile required.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "SAD",
+      "english_word": "sad",
+      "dominant_hand": {
+        "handshape": "5",
+        "location": "eye",
+        "palm_orientation": "in"
+      },
+      "movement": "down",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "Both hands at face, fingers drop downward (like tears falling)",
+      "non_manual_markers": ["frown", "eyebrows_furrowed"],
+      "notes": "Hands drop down from face showing sadness/tears. Sad facial expression crucial.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "WANT",
+      "english_word": "want",
+      "dominant_hand": {
+        "handshape": "claw",
+        "location": "neutral_space",
+        "palm_orientation": "up"
+      },
+      "non_dominant_hand": {
+        "handshape": "claw",
+        "location": "neutral_space",
+        "palm_orientation": "up"
+      },
+      "movement": "backward",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "Both hands (claw shape, palms up) pull toward body",
+      "notes": "Grasping/pulling motion toward self. Shows desire to have/obtain.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "NEED",
+      "english_word": "need",
+      "dominant_hand": {
+        "handshape": "index",
+        "location": "neutral_space",
+        "palm_orientation": "down",
+        "fingers_extended": ["index"]
+      },
+      "movement": "down",
+      "is_two_handed": false,
+      "movement_path": "Index finger bent at angle, moves down with emphasis",
+      "notes": "Emphatic downward motion. Shows necessity/requirement.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "HAVE",
+      "english_word": "have",
+      "dominant_hand": {
+        "handshape": "bent",
+        "location": "chest",
+        "palm_orientation": "in"
+      },
+      "non_dominant_hand": {
+        "handshape": "bent",
+        "location": "chest",
+        "palm_orientation": "in"
+      },
+      "movement": "contact",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "contact_location": "chest",
+      "movement_path": "Both hands touch chest simultaneously",
+      "notes": "Shows possession by bringing hands to self",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "GO",
+      "english_word": "go",
+      "dominant_hand": {
+        "handshape": "index",
+        "location": "neutral_space",
+        "palm_orientation": "forward",
+        "fingers_extended": ["index"]
+      },
+      "non_dominant_hand": {
+        "handshape": "index",
+        "location": "neutral_space",
+        "palm_orientation": "forward",
+        "fingers_extended": ["index"]
+      },
+      "movement": "forward",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "Both index fingers point forward and move in that direction",
+      "notes": "Directional sign. Can be modified to show where going.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "COME",
+      "english_word": "come",
+      "dominant_hand": {
+        "handshape": "index",
+        "location": "neutral_space",
+        "palm_orientation": "up",
+        "fingers_extended": ["index"]
+      },
+      "non_dominant_hand": {
+        "handshape": "index",
+        "location": "neutral_space",
+        "palm_orientation": "up",
+        "fingers_extended": ["index"]
+      },
+      "movement": "backward",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "Index fingers rotate/pull toward signer (beckoning motion)",
+      "notes": "Beckoning gesture bringing toward signer",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "EAT",
+      "english_word": "eat",
+      "dominant_hand": {
+        "handshape": "flat",
+        "location": "mouth",
+        "palm_orientation": "in",
+        "fingers_extended": ["thumb", "index", "middle", "ring", "pinky"]
+      },
+      "movement": "contact",
+      "is_two_handed": false,
+      "contact_location": "mouth",
+      "movement_path": "Fingertips touch mouth multiple times (bringing food to mouth)",
+      "notes": "Mimics bringing food to mouth. Can be repeated for emphasis.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "DRINK",
+      "english_word": "drink",
+      "dominant_hand": {
+        "handshape": "C",
+        "location": "mouth",
+        "palm_orientation": "left"
+      },
+      "movement": "contact",
+      "is_two_handed": false,
+      "contact_location": "mouth",
+      "movement_path": "C-hand (like holding cup) moves to mouth and tips upward",
+      "notes": "Mimics drinking from cup/glass",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "WATER",
+      "english_word": "water",
+      "dominant_hand": {
+        "handshape": "3",
+        "location": "chin",
+        "palm_orientation": "left",
+        "fingers_extended": ["index", "middle", "ring"]
+      },
+      "movement": "tap",
+      "is_two_handed": false,
+      "contact_location": "chin",
+      "movement_path": "W handshape taps chin twice",
+      "notes": "W for water. Taps chin/mouth area.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "BEAUTIFUL",
+      "english_word": "beautiful",
+      "dominant_hand": {
+        "handshape": "5",
+        "location": "chin",
+        "palm_orientation": "in"
+      },
+      "movement": "circle",
+      "is_two_handed": false,
+      "movement_path": "Hand starts at one side of face, circles around face, ends with hand closed",
+      "notes": "Hand opens at face and closes as it circles, showing beauty all around face",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "LOVE",
+      "english_word": "love",
+      "dominant_hand": {
+        "handshape": "fist",
+        "location": "chest",
+        "palm_orientation": "in"
+      },
+      "non_dominant_hand": {
+        "handshape": "fist",
+        "location": "chest",
+        "palm_orientation": "in"
+      },
+      "movement": "none",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "contact_location": "chest",
+      "movement_path": "Both fists cross over heart/chest area",
+      "non_manual_markers": ["smile"],
+      "notes": "Arms crossed over chest in hugging gesture, holding close to heart",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "FRIEND",
+      "english_word": "friend",
+      "dominant_hand": {
+        "handshape": "index",
+        "location": "other_hand",
+        "palm_orientation": "down",
+        "fingers_extended": ["index"]
+      },
+      "non_dominant_hand": {
+        "handshape": "index",
+        "location": "neutral_space",
+        "palm_orientation": "up",
+        "fingers_extended": ["index"]
+      },
+      "movement": "alternating",
+      "is_two_handed": true,
+      "symmetrical": false,
+      "movement_path": "Index fingers hook together, then alternate positions (top/bottom switch)",
+      "notes": "Shows connection/bond between two people. Fingers interlock and switch.",
+      "source": "ASL Dictionary",
+      "verified": false
+    },
+    {
+      "gloss": "FAMILY",
+      "english_word": "family",
+      "dominant_hand": {
+        "handshape": "F",
+        "location": "neutral_space",
+        "palm_orientation": "forward"
+      },
+      "non_dominant_hand": {
+        "handshape": "F",
+        "location": "neutral_space",
+        "palm_orientation": "forward"
+      },
+      "movement": "circle",
+      "is_two_handed": true,
+      "symmetrical": true,
+      "movement_path": "F handshapes start together, circle outward and around to meet again",
+      "notes": "F for family. Circle shows family group/unity.",
+      "source": "ASL Dictionary",
+      "verified": false
+    }
+  ]
+}
