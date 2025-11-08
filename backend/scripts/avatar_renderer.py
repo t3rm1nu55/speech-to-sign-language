@@ -103,9 +103,25 @@ class AvatarRenderer:
         plt.close()
 
     def _draw_body(self, ax, body_landmarks: List[Dict]):
-        """Draw body skeleton"""
+        """Draw body skeleton with enhanced visualization"""
 
-        # Draw connections
+        # Draw torso as filled polygon for better body representation
+        torso_indices = [11, 12, 24, 23]  # Left shoulder, right shoulder, right hip, left hip
+        if all(i < len(body_landmarks) and body_landmarks[i].get('visibility', 0) > 0.5 for i in torso_indices):
+            torso_points = [(body_landmarks[i]['x'], body_landmarks[i]['y']) for i in torso_indices]
+            from matplotlib.patches import Polygon
+            torso_polygon = Polygon(torso_points, facecolor='lightblue', edgecolor='blue', alpha=0.3, linewidth=2)
+            ax.add_patch(torso_polygon)
+
+        # Draw head as circle
+        if len(body_landmarks) > 0 and body_landmarks[0].get('visibility', 0) > 0.5:
+            nose = body_landmarks[0]
+            from matplotlib.patches import Circle
+            head_radius = 0.05
+            head_circle = Circle((nose['x'], nose['y']), head_radius, facecolor='peachpuff', edgecolor='darkgoldenrod', alpha=0.6, linewidth=2)
+            ax.add_patch(head_circle)
+
+        # Draw connections with thicker lines
         for conn in self.POSE_CONNECTIONS:
             start_idx, end_idx = conn
             if start_idx < len(body_landmarks) and end_idx < len(body_landmarks):
@@ -114,36 +130,60 @@ class AvatarRenderer:
 
                 # Only draw if both landmarks are visible
                 if start.get('visibility', 0) > 0.5 and end.get('visibility', 0) > 0.5:
+                    # Color code: arms in darker green, legs in lighter green
+                    color = 'darkgreen' if start_idx in [11, 12, 13, 14, 15, 16] or end_idx in [11, 12, 13, 14, 15, 16] else 'green'
+                    linewidth = 3.5 if start_idx in [11, 12, 13, 14, 15, 16] or end_idx in [11, 12, 13, 14, 15, 16] else 2.5
                     ax.plot(
                         [start['x'], end['x']],
                         [start['y'], end['y']],
-                        'g-', linewidth=2, alpha=0.7
+                        color=color, linewidth=linewidth, alpha=0.8
                     )
 
-        # Draw joints
+        # Draw joints with better visibility
         for i, lm in enumerate(body_landmarks):
             if lm.get('visibility', 0) > 0.5:
-                ax.plot(lm['x'], lm['y'], 'go', markersize=4)
+                # Larger markers for key joints (shoulders, elbows, wrists)
+                if i in [11, 12, 13, 14, 15, 16]:  # Arms
+                    ax.plot(lm['x'], lm['y'], 'o', color='darkgreen', markersize=6, markeredgecolor='black', markeredgewidth=0.5)
+                else:
+                    ax.plot(lm['x'], lm['y'], 'o', color='green', markersize=4, markeredgecolor='black', markeredgewidth=0.5)
 
     def _draw_hand(self, ax, hand_landmarks: List[Dict], color='red', label='Hand'):
-        """Draw hand skeleton"""
+        """Draw hand skeleton with enhanced finger visibility"""
 
-        # Draw connections
+        # Draw palm as filled polygon
+        palm_indices = [0, 1, 5, 9, 13, 17]  # Wrist and base of each finger
+        if all(i < len(hand_landmarks) for i in palm_indices):
+            palm_points = [(hand_landmarks[i]['x'], hand_landmarks[i]['y']) for i in [0, 1, 5, 9, 13, 17, 0]]
+            from matplotlib.patches import Polygon
+            palm_color = 'mistyrose' if color == 'red' else 'lightcyan'
+            edge_color = 'darkred' if color == 'red' else 'darkblue'
+            palm_polygon = Polygon(palm_points, facecolor=palm_color, edgecolor=edge_color, alpha=0.25, linewidth=1.5)
+            ax.add_patch(palm_polygon)
+
+        # Draw finger connections with varying thickness
         for conn in self.HAND_CONNECTIONS:
             start_idx, end_idx = conn
             if start_idx < len(hand_landmarks) and end_idx < len(hand_landmarks):
                 start = hand_landmarks[start_idx]
                 end = hand_landmarks[end_idx]
 
+                # Thicker lines for main finger bones
+                linewidth = 2.5 if start_idx in [1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15, 17, 18, 19] else 2.0
+
                 ax.plot(
                     [start['x'], end['x']],
                     [start['y'], end['y']],
-                    color=color, linewidth=1.5, alpha=0.7
+                    color=color, linewidth=linewidth, alpha=0.85
                 )
 
-        # Draw joints
+        # Draw joints with emphasis on fingertips
         for i, lm in enumerate(hand_landmarks):
-            ax.plot(lm['x'], lm['y'], 'o', color=color, markersize=3, label=label if i == 0 else '')
+            # Fingertips (4, 8, 12, 16, 20) are larger and highlighted
+            if i in [4, 8, 12, 16, 20]:
+                ax.plot(lm['x'], lm['y'], 'o', color=color, markersize=5, markeredgecolor='black', markeredgewidth=0.8, label=label if i == 4 else '')
+            else:
+                ax.plot(lm['x'], lm['y'], 'o', color=color, markersize=3.5, markeredgecolor='black', markeredgewidth=0.5)
 
     def render_comparison(self, sign_dir: Path, frame_number: int, output_dir: Path = None):
         """

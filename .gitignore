@@ -13,4 +13,7 @@
 # OS files
 .DS_Store
 Thumbs.db
+
+# Avatar processing data (large datasets)
 avatar_training_data/
+avatar_final_output/

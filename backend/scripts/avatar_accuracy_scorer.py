@@ -234,15 +234,16 @@ class AvatarAccuracyScorer:
         avg_right_hand = np.mean([s['right_hand'] for s in frame_scores if s['right_hand'] > 0])
         avg_left_hand = np.mean([s['left_hand'] for s in frame_scores if s['left_hand'] > 0])
 
+        # Convert numpy types to native Python types for JSON serialization
         report = {
             'sign': sign_dir.name,
             'frames_analyzed': len(sample_frames),
-            'avg_overall_accuracy': avg_overall,
-            'avg_body_accuracy': avg_body,
-            'avg_right_hand_accuracy': avg_right_hand,
-            'avg_left_hand_accuracy': avg_left_hand,
+            'avg_overall_accuracy': float(avg_overall) if not np.isnan(avg_overall) else 0.0,
+            'avg_body_accuracy': float(avg_body) if not np.isnan(avg_body) else 0.0,
+            'avg_right_hand_accuracy': float(avg_right_hand) if not np.isnan(avg_right_hand) else 0.0,
+            'avg_left_hand_accuracy': float(avg_left_hand) if not np.isnan(avg_left_hand) else 0.0,
             'frame_scores': frame_scores,
-            'meets_99_target': avg_overall >= 99.0
+            'meets_99_target': bool(avg_overall >= 99.0)
         }
 
         # Print report
