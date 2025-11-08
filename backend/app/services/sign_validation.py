@@ -205,6 +205,44 @@ class SignValidationService:
             result.diagnostics['error'] = str(e)
             return result
 
+    def _filter_active_signing_frames(self, frames: List[Dict]) -> List[Dict]:
+        """
+        Filter frames to focus on active signing (hands visible and moving)
+
+        Based on visual analysis:
+        - Wrist visibility < 0.60: Hands at rest, not detected
+        - Wrist visibility > 0.65: Hands actively signing, reliably detected
+
+        Args:
+            frames: All frames from video
+
+        Returns:
+            Frames where hands are actively signing
+        """
+        active_frames = []
+
+        for frame in frames:
+            pose = frame.get('pose')
+            if not pose or len(pose) < 17:
+                continue
+
+            # Check wrist visibility (landmarks 15=left wrist, 16=right wrist)
+            left_wrist_vis = pose[15].get('visibility', 0) if len(pose) > 15 else 0
+            right_wrist_vis = pose[16].get('visibility', 0) if len(pose) > 16 else 0
+
+            # Include frame if either wrist has high visibility (>0.65)
+            if left_wrist_vis > 0.65 or right_wrist_vis > 0.65:
+                active_frames.append(frame)
+
+        # If we filtered out too many frames, return all frames
+        # (better to have some data than none)
+        if len(active_frames) < 3 and len(frames) > 0:
+            logger.warning(f"Only {len(active_frames)} active frames found, using all {len(frames)} frames")
+            return frames
+
+        logger.info(f"Filtered {len(frames)} frames to {len(active_frames)} active signing frames")
+        return active_frames
+
     def _assess_video_quality(self, frames: List[Dict]) -> float:
         """
         Assess video quality based on pose detection consistency
@@ -228,22 +266,23 @@ class SignValidationService:
         detection_rate = poses_detected / len(frames)
         quality_factors.append(detection_rate)
 
-        # 2. Hand detection rate
+        # 2. Hand detection rate (null-safe)
         hands_detected = sum(
             1 for f in frames
-            if (f.get('left_hand') and len(f['left_hand']) >= 21) or
-               (f.get('right_hand') and len(f['right_hand']) >= 21)
+            if (f.get('left_hand') is not None and len(f['left_hand']) >= 21) or
+               (f.get('right_hand') is not None and len(f['right_hand']) >= 21)
         )
-        hand_rate = hands_detected / len(frames)
+        hand_rate = hands_detected / len(frames) if len(frames) > 0 else 0.0
         quality_factors.append(hand_rate)
 
         # 3. Landmark visibility (average)
         visible_landmarks = []
         for frame in frames:
-            if frame.get('pose'):
+            pose = frame.get('pose')
+            if pose:
                 visibilities = [
-                    p['visibility'] for p in frame['pose']
-                    if 'visibility' in p
+                    p.get('visibility', 0) for p in pose
+                    if isinstance(p, dict)
                 ]
                 if visibilities:
                     visible_landmarks.append(np.mean(visibilities))
@@ -273,8 +312,12 @@ class SignValidationService:
             'hand_velocity': None,
         }
 
-        valid_frames = [f for f in frames if f.get('pose') and len(f['pose']) >= 33]
+        # Filter to active signing frames (wrist visibility > 0.65)
+        active_frames = self._filter_active_signing_frames(frames)
+
+        valid_frames = [f for f in active_frames if f.get('pose') and len(f['pose']) >= 33]
         if not valid_frames:
+            logger.warning("No valid frames with pose data after filtering")
             return features
 
         # Extract hand positions across frames
@@ -289,8 +332,8 @@ class SignValidationService:
                     'z': right_wrist['z']
                 })
 
-        # Analyze handshape from hand landmarks
-        features['handshape'] = self._detect_handshape(frames)
+        # Analyze handshape from hand landmarks (use active frames)
+        features['handshape'] = self._detect_handshape(active_frames)
 
         # Analyze location (where in signing space)
         features['location'] = self._detect_location(features['hand_positions'])
@@ -322,8 +365,8 @@ class SignValidationService:
 
             features['hand_velocity'] = np.mean(distances) if distances else 0.0
 
-        # Analyze palm orientation
-        features['palm_orientation'] = self._detect_palm_orientation(frames)
+        # Analyze palm orientation (use active frames)
+        features['palm_orientation'] = self._detect_palm_orientation(active_frames)
 
         return features
 
@@ -335,9 +378,15 @@ class SignValidationService:
         """
         # Look for frames with hand data
         for frame in frames:
-            right_hand = frame.get('right_hand', [])
-            if len(right_hand) >= 21:
+            right_hand = frame.get('right_hand')
+            # Null-safe check: right_hand could be None or missing
+            if right_hand is not None and len(right_hand) >= 21:
                 return self._classify_handshape(right_hand)
+
+            # Try left hand if right hand not available
+            left_hand = frame.get('left_hand')
+            if left_hand is not None and len(left_hand) >= 21:
+                return self._classify_handshape(left_hand)
 
         return Handshape.UNKNOWN
 
