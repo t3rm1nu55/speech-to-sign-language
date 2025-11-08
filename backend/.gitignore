@@ -78,8 +78,8 @@ data/sign_videos/
 *.sqlite
 *.sqlite3
 
-# Models (large files)
-models/
+# ML Models (large files) - exclude app/models which contains database models
+/models/
 *.pth
 *.pt
 *.onnx
