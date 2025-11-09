@@ -10,12 +10,15 @@ import json
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Tuple
+from avatar_pose_generator import AvatarPoseGenerator
 
 
 class AvatarAccuracyScorer:
     """Scores avatar accuracy against ground truth"""
 
     def __init__(self):
+        # Initialize avatar pose generator for creating constrained poses
+        self.pose_generator = AvatarPoseGenerator()
         # Landmark weights (more important landmarks get higher weight)
         self.LANDMARK_WEIGHTS = {
             'wrist': 2.0,  # Critical for hand positioning
@@ -84,7 +87,7 @@ class AvatarAccuracyScorer:
             total_weight += self.LANDMARK_WEIGHTS['hand']
 
         if total_weight > 0:
-            scores['overall'] = (weighted_sum / total_weight) * 100
+            scores['overall'] = weighted_sum / total_weight
 
         return scores
 
@@ -221,9 +224,9 @@ class AvatarAccuracyScorer:
             if frame_data['frame'] not in sample_frames:
                 continue
 
-            # For now, avatar pose == ground truth (perfect render)
-            # In real implementation, this would load actual avatar render
-            avatar_pose = frame_data.copy()
+            # Generate avatar pose with anatomical constraints
+            # This applies bone length limits and joint angle constraints
+            avatar_pose = self.pose_generator.generate_from_frame_data(frame_data)
 
             score = self.calculate_pose_accuracy(frame_data, avatar_pose)
             frame_scores.append(score)
